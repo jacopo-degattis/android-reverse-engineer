@@ -5,13 +5,18 @@ import stat
 import zipfile
 import requests
 from shutil import which, rmtree
-from os import remove, system, path, access, X_OK, chmod
+from os import remove, system, path, access, X_OK, chmod, listdir
 
 GENERATE_CERT = "keytool -genkey -v -keystore cert.keystore -alias alias_name -keyalg RSA -keysize 2048 -validity 10000"
 SIGN_APK = "jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 -keystore {keystore} {apk} {alias}"
 
 def exists(name: str) -> bool:
     return which(name)
+
+def cleanup() -> None:
+    blacklist = ["README.md", "toolkit.py"]
+    for entry in filter(lambda x: x not in blacklist, listdir("./")):
+        rmtree(entry) if path.isdir(entry) else remove(entry)
 
 # Fetch tools 
 # TODO: add local file checking
@@ -100,11 +105,23 @@ if __name__ == "__main__":
     # Check for existing tools
     for tool in tools: install(tool) if not exists(tool) else None
 
-    if len(sys.argv) <= 1:
+    if len(sys.argv) < 1:
         help()
         exit(0)
 
+    print(len(sys.argv))
+    if len(sys.argv) == 2:
+        if not sys.argv[1] == "cleanup":
+            exit(-1)
+
+        confirm = input("[!] Are you sure you want to delete all file in this directory ? (y/n)")
+
+        if not confirm == "y": exit(0)
+
+        cleanup()
+
+
     if len(sys.argv) == 3:
         dispatch(*sys.argv[1:])
-
+    
     exit(0)

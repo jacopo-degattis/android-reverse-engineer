@@ -10,8 +10,9 @@ from os import remove, system, path, access, X_OK, chmod, listdir
 GENERATE_CERT = "keytool -genkey -v -keystore cert.keystore -alias alias_name -keyalg RSA -keysize 2048 -validity 10000"
 SIGN_APK = "jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 -keystore {keystore} {apk} {alias}"
 
+# Check both locally and globally if app is installed
 def exists(name: str) -> bool:
-    return which(name)
+    return which(name) != None or path.isfile(name) or path.isdir(name)
 
 def cleanup() -> None:
     blacklist = ["README.md", "toolkit.py"]
@@ -66,7 +67,6 @@ def apktool(action, filename) -> int:
     return system(f"apktool {action} {filename}")
 
 def sign_apk(filename: str) -> None:
-    print("Got => ", filename)
     return system(SIGN_APK.format(keystore="cert.keystore", apk=f"{filename}.apk", alias="alias_name"))
 
 def rebuild(*args):
@@ -109,7 +109,6 @@ if __name__ == "__main__":
         help()
         exit(0)
 
-    print(len(sys.argv))
     if len(sys.argv) == 2:
         if not sys.argv[1] == "cleanup":
             exit(-1)
